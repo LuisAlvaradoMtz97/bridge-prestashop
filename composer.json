@@ -1,0 +1,22 @@
+{
+  "name": "bridgeprestashop/bridgeprestashop",
+  "description": "Bridge para enviar notificaciones de pedidos de PrestaShop a sistemas externos vía Webhooks.",
+  "type": "prestashop-module",
+  "license": "AFL-3.0",
+  "authors": [
+    {
+      "name": "Bridge PrestaShop Team"
+    }
+  ],
+  "require": {
+    "php": ">=8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "BridgePrestashop\\": "src/"
+    }
+  },
+  "config": {
+    "prepend-autoloader": false
+  }
+}
