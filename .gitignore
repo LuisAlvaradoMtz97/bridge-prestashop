@@ -5,3 +5,5 @@ composer.lock
 *.log
 *.zip
 .DS_Store
+/bridgeprestashop/
+*.zip
