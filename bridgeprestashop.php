@@ -33,6 +33,7 @@ spl_autoload_register(static function (string $class): void {
 });
 
 use BridgePrestashop\Config\ModuleConfig;
+use BridgePrestashop\Handler\CustomerEventHandler;
 use BridgePrestashop\Handler\OrderEventHandler;
 use BridgePrestashop\HttpClient\WebhookSender;
 
@@ -65,6 +66,7 @@ class BridgePrestashop extends Module
         return parent::install()
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('actionOrderStatusPostUpdate')
+            && $this->registerHook('actionCustomerAccountAdd')
             && ModuleConfig::installDefaults();
     }
 
@@ -111,6 +113,15 @@ class BridgePrestashop extends Module
         $handler->handleOrderStatusUpdated($params);
     }
 
+    /**
+     * Hook disparado inmediatamente tras registrarse un cliente.
+     */
+    public function hookActionCustomerAccountAdd(array $params): void
+    {
+        $handler = new CustomerEventHandler();
+        $handler->handleCustomerCreated($params);
+    }
+
     private function processConfiguration(): string
     {
         $url = trim((string) Tools::getValue(ModuleConfig::KEY_WEBHOOK_URL));
@@ -118,7 +129,9 @@ class BridgePrestashop extends Module
         $secret = trim((string) Tools::getValue(ModuleConfig::KEY_SECRET_TOKEN));
         $timeout = (int) Tools::getValue(ModuleConfig::KEY_TIMEOUT);
         $verifySsl = (bool) Tools::getValue(ModuleConfig::KEY_VERIFY_SSL);
+        $notifyOrders = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_ORDERS);
         $notifyStatus = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE);
+        $notifyCustomer = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION);
         $logRequests = (bool) Tools::getValue(ModuleConfig::KEY_LOG_REQUESTS);
 
         if ($enabled && (empty($url) || !filter_var($url, FILTER_VALIDATE_URL))) {
@@ -134,7 +147,9 @@ class BridgePrestashop extends Module
         Configuration::updateValue(ModuleConfig::KEY_SECRET_TOKEN, $secret);
         Configuration::updateValue(ModuleConfig::KEY_TIMEOUT, (string) $timeout);
         Configuration::updateValue(ModuleConfig::KEY_VERIFY_SSL, $verifySsl ? '1' : '0');
+        Configuration::updateValue(ModuleConfig::KEY_NOTIFY_ORDERS, $notifyOrders ? '1' : '0');
         Configuration::updateValue(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE, $notifyStatus ? '1' : '0');
+        Configuration::updateValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION, $notifyCustomer ? '1' : '0');
         Configuration::updateValue(ModuleConfig::KEY_LOG_REQUESTS, $logRequests ? '1' : '0');
 
         return $this->displayConfirmation($this->l('Configuración guardada correctamente.'));
@@ -186,7 +201,9 @@ class BridgePrestashop extends Module
             ModuleConfig::KEY_SECRET_TOKEN => Configuration::get(ModuleConfig::KEY_SECRET_TOKEN),
             ModuleConfig::KEY_TIMEOUT => Configuration::get(ModuleConfig::KEY_TIMEOUT) ?: ModuleConfig::DEFAULT_TIMEOUT,
             ModuleConfig::KEY_VERIFY_SSL => Configuration::get(ModuleConfig::KEY_VERIFY_SSL),
+            ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) !== false ? Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) : (ModuleConfig::DEFAULT_NOTIFY_ORDERS ? '1' : '0'),
             ModuleConfig::KEY_NOTIFY_STATUS_CHANGE => Configuration::get(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE),
+            ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION),
             ModuleConfig::KEY_LOG_REQUESTS => Configuration::get(ModuleConfig::KEY_LOG_REQUESTS),
         ];
 
@@ -251,13 +268,35 @@ class BridgePrestashop extends Module
                     ],
                     [
                         'type' => 'switch',
+                        'label' => $this->l('Notificar pedidos / órdenes'),
+                        'name' => ModuleConfig::KEY_NOTIFY_ORDERS,
+                        'is_bool' => true,
+                        'desc' => $this->l('Si se activa, enviará una notificación (order.created) cuando un cliente confirme un pedido.'),
+                        'values' => [
+                            ['id' => 'orders_on', 'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'orders_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->l('Notificar también cambios de estado'),
                         'name' => ModuleConfig::KEY_NOTIFY_STATUS_CHANGE,
                         'is_bool' => true,
-                        'desc' => $this->l('Si se activa, también enviará una notificación (order.status_updated) cuando cambie el estado del pedido.'),
+                        'desc' => $this->l('Si se activa y las notificaciones de pedidos están habilitadas, también enviará una notificación (order.status_updated) cuando cambie el estado del pedido.'),
                         'values' => [
                             ['id' => 'status_on', 'value' => 1, 'label' => $this->l('Sí')],
                             ['id' => 'status_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Notificar registro de nuevos clientes'),
+                        'name' => ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION,
+                        'is_bool' => true,
+                        'desc' => $this->l('Si se activa, enviará una notificación (customer.created) cada vez que un cliente se registre en la tienda.'),
+                        'values' => [
+                            ['id' => 'cust_on', 'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'cust_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
                     [

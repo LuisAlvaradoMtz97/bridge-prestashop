@@ -16,13 +16,17 @@ class ModuleConfig
     public const KEY_SECRET_TOKEN = 'BRIDGEPRESTASHOP_SECRET_TOKEN';
     public const KEY_TIMEOUT = 'BRIDGEPRESTASHOP_TIMEOUT';
     public const KEY_VERIFY_SSL = 'BRIDGEPRESTASHOP_VERIFY_SSL';
+    public const KEY_NOTIFY_ORDERS = 'BRIDGEPRESTASHOP_NOTIFY_ORDERS';
     public const KEY_NOTIFY_STATUS_CHANGE = 'BRIDGEPRESTASHOP_NOTIFY_STATUS';
+    public const KEY_NOTIFY_CUSTOMER_REGISTRATION = 'BRIDGEPRESTASHOP_NOTIFY_CUSTOMER';
     public const KEY_LOG_REQUESTS = 'BRIDGEPRESTASHOP_LOG_REQUESTS';
 
     public const DEFAULT_TIMEOUT = 5;
     public const DEFAULT_VERIFY_SSL = true;
     public const DEFAULT_ENABLED = false;
+    public const DEFAULT_NOTIFY_ORDERS = true;
     public const DEFAULT_NOTIFY_STATUS = false;
+    public const DEFAULT_NOTIFY_CUSTOMER_REGISTRATION = true;
     public const DEFAULT_LOG_REQUESTS = true;
 
     /**
@@ -36,7 +40,9 @@ class ModuleConfig
         $res = $res && Configuration::updateValue(self::KEY_SECRET_TOKEN, self::generateRandomToken());
         $res = $res && Configuration::updateValue(self::KEY_TIMEOUT, (string) self::DEFAULT_TIMEOUT);
         $res = $res && Configuration::updateValue(self::KEY_VERIFY_SSL, self::DEFAULT_VERIFY_SSL ? '1' : '0');
+        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_ORDERS, self::DEFAULT_NOTIFY_ORDERS ? '1' : '0');
         $res = $res && Configuration::updateValue(self::KEY_NOTIFY_STATUS_CHANGE, self::DEFAULT_NOTIFY_STATUS ? '1' : '0');
+        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_CUSTOMER_REGISTRATION, self::DEFAULT_NOTIFY_CUSTOMER_REGISTRATION ? '1' : '0');
         $res = $res && Configuration::updateValue(self::KEY_LOG_REQUESTS, self::DEFAULT_LOG_REQUESTS ? '1' : '0');
 
         return $res;
@@ -53,7 +59,9 @@ class ModuleConfig
             self::KEY_SECRET_TOKEN,
             self::KEY_TIMEOUT,
             self::KEY_VERIFY_SSL,
+            self::KEY_NOTIFY_ORDERS,
             self::KEY_NOTIFY_STATUS_CHANGE,
+            self::KEY_NOTIFY_CUSTOMER_REGISTRATION,
             self::KEY_LOG_REQUESTS,
         ];
 
@@ -92,9 +100,21 @@ class ModuleConfig
         return $val === false ? self::DEFAULT_VERIFY_SSL : (bool) $val;
     }
 
+    public static function shouldNotifyOrders(): bool
+    {
+        $val = Configuration::get(self::KEY_NOTIFY_ORDERS);
+        return $val === false ? self::DEFAULT_NOTIFY_ORDERS : (bool) $val;
+    }
+
     public static function shouldNotifyStatusChange(): bool
     {
         return (bool) Configuration::get(self::KEY_NOTIFY_STATUS_CHANGE);
+    }
+
+    public static function shouldNotifyCustomerRegistration(): bool
+    {
+        $val = Configuration::get(self::KEY_NOTIFY_CUSTOMER_REGISTRATION);
+        return $val === false ? self::DEFAULT_NOTIFY_CUSTOMER_REGISTRATION : (bool) $val;
     }
 
     public static function shouldLogRequests(): bool

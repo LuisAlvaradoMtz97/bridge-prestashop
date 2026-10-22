@@ -28,7 +28,7 @@ class OrderEventHandler
      */
     public function handleOrderCreated(array $params): void
     {
-        if (!ModuleConfig::isEnabled()) {
+        if (!ModuleConfig::isEnabled() || !ModuleConfig::shouldNotifyOrders()) {
             return;
         }
 
@@ -51,7 +51,7 @@ class OrderEventHandler
      */
     public function handleOrderStatusUpdated(array $params): void
     {
-        if (!ModuleConfig::isEnabled() || !ModuleConfig::shouldNotifyStatusChange()) {
+        if (!ModuleConfig::isEnabled() || !ModuleConfig::shouldNotifyOrders() || !ModuleConfig::shouldNotifyStatusChange()) {
             return;
         }
 

@@ -9,6 +9,7 @@ if (!defined('_PS_VERSION_')) {
 
 use BridgePrestashop\Config\ModuleConfig;
 use BridgePrestashop\DTO\OrderPayload;
+use BridgePrestashop\DTO\PayloadInterface;
 use BridgePrestashop\Logger\BridgeLogger;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\RequestOptions;
@@ -17,16 +18,16 @@ use Throwable;
 class WebhookSender
 {
     /**
-     * Envía un OrderPayload al webhook configurado.
+     * Envía un PayloadInterface (OrderPayload, CustomerPayload, etc.) al webhook configurado.
      *
      * @return array{success: bool, http_code: int, response: string, error: ?string, duration_ms: float}
      */
-    public function send(OrderPayload $payload, ?int $orderId = null): array
+    public function send(PayloadInterface $payload, ?int $entityId = null): array
     {
         $url = trim(ModuleConfig::getWebhookUrl());
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             $err = 'URL de Webhook inválida o no configurada.';
-            BridgeLogger::warning($err, $orderId);
+            BridgeLogger::warning($err, $entityId);
             return [
                 'success' => false,
                 'http_code' => 0,
@@ -38,8 +39,8 @@ class WebhookSender
 
         $jsonBody = $payload->toJson();
         $payloadArray = $payload->toArray();
-        $eventName = (string) ($payloadArray['event'] ?? 'order.created');
-        $eventId = (string) ($payloadArray['event_id'] ?? '');
+        $eventName = $payload->getEventName();
+        $eventId = $payload->getEventId();
         $timestamp = (string) ($payloadArray['timestamp'] ?? date('c'));
         $secret = ModuleConfig::getSecretToken();
         $timeout = ModuleConfig::getTimeout();
@@ -74,13 +75,13 @@ class WebhookSender
 
         if ($result['success']) {
             BridgeLogger::info(
-                sprintf('Webhook enviado con éxito a %s (HTTP %d en %sms)', $url, $result['http_code'], $durationMs),
-                $orderId
+                sprintf('Webhook [%s] enviado con éxito a %s (HTTP %d en %sms)', $eventName, $url, $result['http_code'], $durationMs),
+                $entityId
             );
         } else {
             BridgeLogger::error(
-                sprintf('Fallo al enviar Webhook a %s (HTTP %d, error: %s)', $url, $result['http_code'], $result['error'] ?? 'desconocido'),
-                $orderId
+                sprintf('Fallo al enviar Webhook [%s] a %s (HTTP %d, error: %s)', $eventName, $url, $result['http_code'], $result['error'] ?? 'desconocido'),
+                $entityId
             );
         }
 

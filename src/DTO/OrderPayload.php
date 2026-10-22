@@ -13,11 +13,12 @@ use Context;
 use Country;
 use Currency;
 use Customer;
+use Group;
 use Order;
 use OrderState;
 use State;
 
-class OrderPayload
+class OrderPayload implements PayloadInterface
 {
     private array $data;
 
@@ -42,6 +43,16 @@ class OrderPayload
 
         // Cliente
         $customer = new Customer((int) $order->id_customer);
+        $defaultGroup = new Group((int) $customer->id_default_group, (int) $idLang);
+        $defaultGroupName = is_array($defaultGroup->name)
+            ? ($defaultGroup->name[$idLang] ?? reset($defaultGroup->name))
+            : (string) $defaultGroup->name;
+
+        $rawGroups = $customer->getGroups();
+        if (empty($rawGroups)) {
+            $rawGroups = [(int) $customer->id_default_group];
+        }
+        $customerGroups = array_values(array_map('intval', $rawGroups));
 
         // Direcciones
         $shippingAddress = new Address((int) $order->id_address_delivery);
@@ -117,6 +128,15 @@ class OrderPayload
                 'lastname' => (string) $customer->lastname,
                 'email' => (string) $customer->email,
                 'company' => (string) $customer->company,
+                'siret' => (string) $customer->siret,
+                'ape' => (string) $customer->ape,
+                'website' => (string) $customer->website,
+                'is_guest' => (bool) $customer->is_guest,
+                'default_group' => [
+                    'id' => (int) $customer->id_default_group,
+                    'name' => (string) $defaultGroupName,
+                ],
+                'groups' => $customerGroups,
             ],
             'shipping_address' => self::formatAddress($shippingAddress, $idLang),
             'invoice_address' => self::formatAddress($invoiceAddress, $idLang),
@@ -177,6 +197,16 @@ class OrderPayload
     {
         $json = json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         return $json !== false ? $json : '{}';
+    }
+
+    public function getEventName(): string
+    {
+        return (string) ($this->data['event'] ?? 'order.created');
+    }
+
+    public function getEventId(): string
+    {
+        return (string) ($this->data['event_id'] ?? '');
     }
 
     private static function formatAddress(Address $address, int $idLang): array

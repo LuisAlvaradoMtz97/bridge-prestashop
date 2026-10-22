@@ -6,9 +6,14 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 ## 🚀 Características
 
+* **Control granular de notificaciones:**
+  * Switch independiente para habilitar o ignorar notificaciones de pedidos (`order.created`).
+  * Switch independiente para habilitar o ignorar notificaciones de cambios de estado (`order.status_updated`).
+  * Switch independiente para habilitar o ignorar notificaciones de nuevos clientes (`customer.created`).
 * **Disparo automático en tiempo real:**
-  * `order.created`: Se ejecuta inmediatamente cuando el cliente confirma el pedido (`actionValidateOrder`).
+  * `order.created`: Se ejecuta inmediatamente cuando el cliente confirma el pedido (`actionValidateOrder`), enriquecido con la clasificación completa del cliente (grupo por defecto, grupos asociados, tipo de cuenta particular o empresa B2B).
   * `order.status_updated`: Opcional, se ejecuta cuando el estado del pedido cambia en el Backoffice o por pasarelas de pago (`actionOrderStatusPostUpdate`).
+  * `customer.created`: Opcional, se ejecuta inmediatamente cuando un nuevo cliente se registra en la tienda (`actionCustomerAccountAdd`).
 * **Seguridad de nivel empresarial:**
   * Autenticación mediante `Authorization: Bearer <token>`.
   * Firma digital criptográfica `X-Bridge-Signature: sha256=<hash_hmac>` para verificar la integridad del payload en el receptor.
@@ -58,11 +63,16 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 Una vez instalado, ingresa a la configuración del módulo:
 
-1. **Habilitar Bridge:** Activa el switch para comenzar a enviar notificaciones.
-2. **URL del Webhook de destino:** Especifica el endpoint donde tu sistema externo escucha las peticiones (ej. `https://api.tu-sitio.com/webhooks/prestashop-orders`).
-3. **Token / Clave Secreta:** Clave compartida entre PrestaShop y el sitio receptor.
-4. **Tiempo de espera (Timeout):** Tiempo máximo de espera en segundos (recomendado: 3 a 5).
-5. Haz clic en **"Probar Webhook ahora"** para confirmar que tu servidor externo responde correctamente (código HTTP `200`).
+1. **Habilitar Bridge:** Activa o desactiva de forma global el envío de webhooks.
+2. **URL del Webhook de destino:** Endpoint donde tu sistema externo escucha las peticiones (ej. `https://api.tu-sitio.com/webhooks/prestashop`).
+3. **Token / Clave Secreta:** Clave compartida para verificar autenticidad (Bearer y firma HMAC-SHA256).
+4. **Tiempo de espera (Timeout):** Tiempo máximo en segundos (recomendado: 3 a 5).
+5. **Verificar certificado SSL:** Verificación TLS/SSL (mantener encendido en producción).
+6. **Notificar pedidos / órdenes:** Si está encendido, se envían eventos de pedidos (`order.created`). Si está apagado, se ignoran por completo.
+7. **Notificar también cambios de estado:** Si está encendido (y pedidos activo), se envían actualizaciones de estado (`order.status_updated`).
+8. **Notificar registro de nuevos clientes:** Si está encendido, se envían notificaciones de creación de cuentas (`customer.created`). Si está apagado, se ignoran por completo.
+9. **Registrar logs en PrestaShop:** Auditoría de respuestas y errores en *Parámetros Avanzados > Registros*.
+10. Haz clic en **"Probar Webhook ahora"** para verificar conectividad con un clic.
 
 ---
 
@@ -74,7 +84,7 @@ Una vez instalado, ingresa a la configuración del módulo:
 | :--- | :--- | :--- |
 | `Content-Type` | Formato de la petición | `application/json` |
 | `User-Agent` | Identificador del cliente | `BridgePrestashop-Webhook/1.0` |
-| `X-Bridge-Event` | Tipo de evento | `order.created` o `order.status_updated` |
+| `X-Bridge-Event` | Tipo de evento | `order.created`, `order.status_updated` o `customer.created` |
 | `X-Bridge-Delivery` | UUID único de entrega (idempotencia) | `c56a4180-65aa-42ec-a945-5fd21dec0538` |
 | `X-Bridge-Timestamp` | Fecha y hora en ISO 8601 | `2026-10-18T23:30:00-06:00` |
 | `Authorization` | Token Bearer | `Bearer <tu_token_secreto>` |
@@ -127,7 +137,16 @@ Una vez instalado, ingresa a la configuración del módulo:
     "firstname": "Carlos",
     "lastname": "Gómez",
     "email": "carlos.gomez@example.com",
-    "company": "Soluciones Digitales"
+    "company": "Soluciones Digitales",
+    "siret": "12345678900012",
+    "ape": "6201Z",
+    "website": "https://solucionesdigitales.com",
+    "is_guest": false,
+    "default_group": {
+      "id": 3,
+      "name": "Cliente"
+    },
+    "groups": [3]
   },
   "shipping_address": {
     "alias": "Mi Casa",
@@ -180,6 +199,46 @@ Una vez instalado, ingresa a la configuración del módulo:
       "total_price_tax_excl": 43.10
     }
   ]
+}
+```
+
+---
+
+### Ejemplo de Payload JSON (`customer.created`)
+
+```json
+{
+  "event": "customer.created",
+  "event_id": "8f3b2049-74d1-4be6-a19e-e8b9487c69a2",
+  "timestamp": "2026-10-18T23:35:00-06:00",
+  "shop": {
+    "id": 1,
+    "name": "Mi Tienda",
+    "url": "https://mitienda.com/"
+  },
+  "customer": {
+    "id": 43,
+    "id_gender": 1,
+    "firstname": "Laura",
+    "lastname": "Martínez",
+    "email": "laura.martinez@example.com",
+    "company": "Comercializadora Norte SA",
+    "siret": "98765432100045",
+    "ape": "4719B",
+    "website": "https://comercializadoranorte.com",
+    "birthday": "1990-05-15",
+    "newsletter": true,
+    "optin": false,
+    "active": true,
+    "is_guest": false,
+    "default_group": {
+      "id": 3,
+      "name": "Cliente"
+    },
+    "groups": [3],
+    "date_add": "2026-10-18 23:35:00",
+    "date_upd": "2026-10-18 23:35:00"
+  }
 }
 ```
 
