@@ -17,6 +17,7 @@ use Group;
 use Order;
 use OrderState;
 use State;
+use BridgePrestashop\Logger\BridgeLogger;
 
 class OrderPayload implements PayloadInterface
 {
@@ -29,6 +30,7 @@ class OrderPayload implements PayloadInterface
 
     public static function fromOrder(Order $order, string $eventName = 'order.created'): self
     {
+
         $context = Context::getContext();
         $idLang = $order->id_lang ?: ($context->language ? $context->language->id : 1);
 
@@ -148,8 +150,11 @@ class OrderPayload implements PayloadInterface
         ];
 
         return new self($data);
+      
+        
     }
 
+    //Creacion de envio de datos pruebas
     public static function createTestPayload(): self
     {
         $context = Context::getContext();

@@ -23,9 +23,9 @@ class ModuleConfig
 
     public const DEFAULT_TIMEOUT = 5;
     public const DEFAULT_VERIFY_SSL = true;
-    public const DEFAULT_ENABLED = false;
+    public const DEFAULT_ENABLED = true;
     public const DEFAULT_NOTIFY_ORDERS = true;
-    public const DEFAULT_NOTIFY_STATUS = false;
+    public const DEFAULT_NOTIFY_STATUS = true;
     public const DEFAULT_NOTIFY_CUSTOMER_REGISTRATION = true;
     public const DEFAULT_LOG_REQUESTS = true;
 

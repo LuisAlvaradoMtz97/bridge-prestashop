@@ -47,6 +47,7 @@ class BridgePrestashop extends Module
         $this->author = 'Luis Eduardo Alvarado Martínez';
         $this->need_instance = 0;
         $this->bootstrap = true;
+        $this->emailing = 'luis.alvaradomtz97@gmail.com';
 
         // Compatible con PrestaShop 9.0 en adelante
         $this->ps_versions_compliancy = [
@@ -65,7 +66,10 @@ class BridgePrestashop extends Module
     {
         return parent::install()
             && $this->registerHook('actionValidateOrder')
+            // && $this->registerHook('actionOrderStatusUpdate')
+            // && $this->registerHook('actionObjectAddAfter')
             && $this->registerHook('actionOrderStatusPostUpdate')
+            && $this->registerHook('actionCartSave')
             && $this->registerHook('actionCustomerAccountAdd')
             && ModuleConfig::installDefaults();
     }
@@ -104,6 +108,18 @@ class BridgePrestashop extends Module
         $handler->handleOrderCreated($params);
     }
 
+    // public function hookActionOrderStatusUpdate(array $params): void 
+    // {
+    //     $handler = new OrderEventHandler();
+    //     $handler->handleOrderStatusUpdated($params)
+    // }
+
+    // public function hookActionObjectAddAfter(array $params): void 
+    // {
+    //     $handler = new OrderEventHandler();
+    //     $handler->handleOrderCreated($params);
+    // }
+
     /**
      * Hook disparado cuando cambia el estado de un pedido.
      */
@@ -120,6 +136,13 @@ class BridgePrestashop extends Module
     {
         $handler = new CustomerEventHandler();
         $handler->handleCustomerCreated($params);
+    }
+
+    public function hookActionCartSave(array $params): void
+    {
+    $handler = new CustomerEventHandler();
+        $handler->handleCustomerCreated($params);
+    
     }
 
     private function processConfiguration(): string
