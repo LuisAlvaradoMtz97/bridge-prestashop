@@ -4,7 +4,7 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 ---
 
-## 🚀 Características
+## Características
 
 * **Control granular de notificaciones:**
   * Switch independiente para habilitar o ignorar notificaciones de pedidos (`order.created`).
@@ -32,7 +32,7 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 ---
 
-## 📋 Requisitos
+## Requisitos
 
 * **PrestaShop:** `9.0.0` o superior.
 * **PHP:** `>= 8.1` (totalmente compatible con PHP 8.2 y 8.3).
@@ -40,7 +40,7 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 ---
 
-## 📦 Instalación
+## Instalación
 
 ### Opción 1: Archivo ZIP (Recomendado para Backoffice)
 1. Comprime la carpeta `bridgeprestashop/` en un archivo `bridgeprestashop.zip`.
@@ -59,7 +59,7 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
 
 ---
 
-## ⚙️ Configuración
+## Configuración
 
 Una vez instalado, ingresa a la configuración del módulo:
 
@@ -76,7 +76,7 @@ Una vez instalado, ingresa a la configuración del módulo:
 
 ---
 
-## 📡 Estructura del Webhook (HTTP POST)
+## Estructura del Webhook (HTTP POST)
 
 ### Cabeceras HTTP enviadas
 
@@ -204,6 +204,118 @@ Una vez instalado, ingresa a la configuración del módulo:
 
 ---
 
+### Ejemplo de Payload JSON (`order.status_updated`)
+
+```json
+{
+  "event": "order.status_updated",
+  "event_id": "1c3d9b2a-88f0-4c71-a320-b9e012de4c1f",
+  "timestamp": "2026-10-18T23:45:00-06:00",
+  "shop": {
+    "id": 1,
+    "name": "Mi Tienda",
+    "url": "https://mitienda.com/"
+  },
+  "order": {
+    "id": 105,
+    "reference": "XJHDFPKO",
+    "status": {
+      "id": 5,
+      "name": "Entregado"
+    },
+    "currency": {
+      "iso_code": "USD",
+      "sign": "$"
+    },
+    "totals": {
+      "total_paid_tax_incl": 125.50,
+      "total_paid_tax_excl": 108.19,
+      "total_products_tax_incl": 115.50,
+      "total_products_tax_excl": 99.57,
+      "total_shipping_tax_incl": 10.00,
+      "total_shipping_tax_excl": 8.62,
+      "total_discounts_tax_incl": 0.0,
+      "total_discounts_tax_excl": 0.0,
+      "total_wrapping_tax_incl": 0.0,
+      "total_wrapping_tax_excl": 0.0
+    },
+    "payment_method": "Tarjeta de crédito (Stripe)",
+    "module": "stripe_official",
+    "date_add": "2026-10-18 23:29:55",
+    "date_upd": "2026-10-18 23:45:00"
+  },
+  "customer": {
+    "id": 42,
+    "firstname": "Carlos",
+    "lastname": "Gómez",
+    "email": "carlos.gomez@example.com",
+    "company": "Soluciones Digitales",
+    "siret": "12345678900012",
+    "ape": "6201Z",
+    "website": "https://solucionesdigitales.com",
+    "is_guest": false,
+    "default_group": {
+      "id": 3,
+      "name": "Cliente"
+    },
+    "groups": [3]
+  },
+  "shipping_address": {
+    "alias": "Mi Casa",
+    "firstname": "Carlos",
+    "lastname": "Gómez",
+    "company": "Soluciones Digitales",
+    "address1": "Av. Insurgentes Sur 1234",
+    "address2": "Piso 5, Depto 502",
+    "postcode": "03100",
+    "city": "Ciudad de México",
+    "state": "CDMX",
+    "country": "México",
+    "country_iso": "MX",
+    "phone": "5512345678",
+    "phone_mobile": "5598765432",
+    "vat_number": "",
+    "dni": ""
+  },
+  "invoice_address": {
+    "alias": "Facturación",
+    "firstname": "Carlos",
+    "lastname": "Gómez",
+    "company": "Soluciones Digitales",
+    "address1": "Av. Insurgentes Sur 1234",
+    "address2": "Piso 5, Depto 502",
+    "postcode": "03100",
+    "city": "Ciudad de México",
+    "state": "CDMX",
+    "country": "México",
+    "country_iso": "MX",
+    "phone": "5512345678",
+    "phone_mobile": "",
+    "vat_number": "SDI123456ABC",
+    "dni": ""
+  },
+  "carrier": {
+    "id": 3,
+    "name": "DHL Express"
+  },
+  "items": [
+    {
+      "product_id": 12,
+      "product_attribute_id": 45,
+      "reference": "PROD-12-RED",
+      "name": "Camiseta de Algodón - Talla M, Color Rojo",
+      "quantity": 2,
+      "unit_price_tax_incl": 25.00,
+      "unit_price_tax_excl": 21.55,
+      "total_price_tax_incl": 50.00,
+      "total_price_tax_excl": 43.10
+    }
+  ]
+}
+```
+
+---
+
 ### Ejemplo de Payload JSON (`customer.created`)
 
 ```json
@@ -244,7 +356,7 @@ Una vez instalado, ingresa a la configuración del módulo:
 
 ---
 
-## 🔒 Cómo validar la firma en el receptor
+## Cómo validar la firma en el receptor
 
 ### Node.js / Express
 ```javascript
