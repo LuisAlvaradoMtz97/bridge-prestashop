@@ -46,4 +46,5 @@ class CustomerEventHandler
             BridgeLogger::error('Excepción no controlada en handleCustomerCreated: ' . $e->getMessage());
         }
     }
+
 }

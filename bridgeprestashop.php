@@ -34,6 +34,7 @@ spl_autoload_register(static function (string $class): void {
 
 use BridgePrestashop\Config\ModuleConfig;
 use BridgePrestashop\Handler\CustomerEventHandler;
+use BridgePrestashop\Handler\CustomerMessageEventHandler;
 use BridgePrestashop\Handler\OrderEventHandler;
 use BridgePrestashop\HttpClient\WebhookSender;
 
@@ -71,6 +72,7 @@ class BridgePrestashop extends Module
             && $this->registerHook('actionOrderStatusPostUpdate')
             && $this->registerHook('actionCartSave')
             && $this->registerHook('actionCustomerAccountAdd')
+            && $this->registerHook('actionObjectCustomerMessageAddAfter')
             && ModuleConfig::installDefaults();
     }
 
@@ -108,18 +110,12 @@ class BridgePrestashop extends Module
         $handler->handleOrderCreated($params);
     }
 
-    // public function hookActionOrderStatusUpdate(array $params): void 
-    // {
-    //     $handler = new OrderEventHandler();
-    //     $handler->handleOrderStatusUpdated($params)
-    // }
-
-    // public function hookActionObjectAddAfter(array $params): void 
-    // {
-    //     $handler = new OrderEventHandler();
-    //     $handler->handleOrderCreated($params);
-    // }
-
+    //Hook para notificacion de mensajes enviados por parte del usuario
+    public function hookActionObjectCustomerMessageAddAfter(array $params) : void
+    {
+        $handler = new CustomerMessageEventHandler();
+        $handler->handleCustomerMessageCreated($params);
+    }
     /**
      * Hook disparado cuando cambia el estado de un pedido.
      */
@@ -155,6 +151,7 @@ class BridgePrestashop extends Module
         $notifyOrders = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_ORDERS);
         $notifyStatus = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE);
         $notifyCustomer = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION);
+        $notifyCustomerMessage  = (bool) Tools::getValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE);
         $logRequests = (bool) Tools::getValue(ModuleConfig::KEY_LOG_REQUESTS);
 
         if ($enabled && (empty($url) || !filter_var($url, FILTER_VALIDATE_URL))) {
@@ -174,6 +171,7 @@ class BridgePrestashop extends Module
         Configuration::updateValue(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE, $notifyStatus ? '1' : '0');
         Configuration::updateValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION, $notifyCustomer ? '1' : '0');
         Configuration::updateValue(ModuleConfig::KEY_LOG_REQUESTS, $logRequests ? '1' : '0');
+        Configuration::updateValue(ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE, $notifyCustomerMessage ? '1' : '0');
 
         return $this->displayConfirmation($this->l('Configuración guardada correctamente.'));
     }
@@ -227,6 +225,8 @@ class BridgePrestashop extends Module
             ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) !== false ? Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) : (ModuleConfig::DEFAULT_NOTIFY_ORDERS ? '1' : '0'),
             ModuleConfig::KEY_NOTIFY_STATUS_CHANGE => Configuration::get(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE),
             ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION),
+            ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE),
+
             ModuleConfig::KEY_LOG_REQUESTS => Configuration::get(ModuleConfig::KEY_LOG_REQUESTS),
         ];
 
@@ -322,6 +322,18 @@ class BridgePrestashop extends Module
                             ['id' => 'cust_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
+                    //Añadimos la opcion para notificar referente a los mensajes
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Notificar mensajes recibidos por clientes'),
+                        'name' => ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE,
+                        'is_bool' => true,
+                        'desc' => $this->l('Si se activa, enviará una notificacion cada vez que el cliente envie un mensaje directo referente a un pedido'),
+                        'values' => [
+                            ['id' => 'cust_on', 'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'cust_off', 'value' =>  0, 'label' => $this->l('No')],
+                        ],
+                    ],
                     [
                         'type' => 'switch',
                         'label' => $this->l('Registrar logs en PrestaShop'),
@@ -332,7 +344,7 @@ class BridgePrestashop extends Module
                             ['id' => 'log_on', 'value' => 1, 'label' => $this->l('Sí')],
                             ['id' => 'log_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
-                    ],
+                    ]
                 ],
                 'buttons' => [
                     [
