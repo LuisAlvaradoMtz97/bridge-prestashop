@@ -10,10 +10,12 @@ Módulo para **PrestaShop 9+** (compatible con PHP 8.1, 8.2 y 8.3) diseñado par
   * Switch independiente para habilitar o ignorar notificaciones de pedidos (`order.created`).
   * Switch independiente para habilitar o ignorar notificaciones de cambios de estado (`order.status_updated`).
   * Switch independiente para habilitar o ignorar notificaciones de nuevos clientes (`customer.created`).
+  * Switch independiente para habilitar o ignorar notificaciones de mensajes de clientes (`customerMessage.created`).
 * **Disparo automático en tiempo real:**
   * `order.created`: Se ejecuta inmediatamente cuando el cliente confirma el pedido (`actionValidateOrder`), enriquecido con la clasificación completa del cliente (grupo por defecto, grupos asociados, tipo de cuenta particular o empresa B2B).
   * `order.status_updated`: Opcional, se ejecuta cuando el estado del pedido cambia en el Backoffice o por pasarelas de pago (`actionOrderStatusPostUpdate`).
   * `customer.created`: Opcional, se ejecuta inmediatamente cuando un nuevo cliente se registra en la tienda (`actionCustomerAccountAdd`).
+  * `customerMessage.created`: Opcional, se ejecuta inmediatamente cuando un cliente envía un mensaje directo referente a un pedido desde su cuenta (`actionObjectCustomerMessageAddAfter`). Omite automáticamente mensajes enviados por empleados desde el Backoffice.
 * **Seguridad de nivel empresarial:**
   * Autenticación mediante `Authorization: Bearer <token>`.
   * Firma digital criptográfica `X-Bridge-Signature: sha256=<hash_hmac>` para verificar la integridad del payload en el receptor.
@@ -71,8 +73,9 @@ Una vez instalado, ingresa a la configuración del módulo:
 6. **Notificar pedidos / órdenes:** Si está encendido, se envían eventos de pedidos (`order.created`). Si está apagado, se ignoran por completo.
 7. **Notificar también cambios de estado:** Si está encendido (y pedidos activo), se envían actualizaciones de estado (`order.status_updated`).
 8. **Notificar registro de nuevos clientes:** Si está encendido, se envían notificaciones de creación de cuentas (`customer.created`). Si está apagado, se ignoran por completo.
-9. **Registrar logs en PrestaShop:** Auditoría de respuestas y errores en *Parámetros Avanzados > Registros*.
-10. Haz clic en **"Probar Webhook ahora"** para verificar conectividad con un clic.
+9. **Notificar mensajes recibidos por clientes:** Si está encendido, se envían notificaciones cuando un cliente envía un mensaje relacionado con su pedido (`customerMessage.created`). Si está apagado, se ignoran por completo.
+10. **Registrar logs en PrestaShop:** Auditoría de respuestas y errores en *Parámetros Avanzados > Registros*.
+11. Haz clic en **"Probar Webhook ahora"** para verificar conectividad con un clic.
 
 ---
 
@@ -84,7 +87,7 @@ Una vez instalado, ingresa a la configuración del módulo:
 | :--- | :--- | :--- |
 | `Content-Type` | Formato de la petición | `application/json` |
 | `User-Agent` | Identificador del cliente | `BridgePrestashop-Webhook/1.0` |
-| `X-Bridge-Event` | Tipo de evento | `order.created`, `order.status_updated` o `customer.created` |
+| `X-Bridge-Event` | Tipo de evento | `order.created`, `order.status_updated`, `customer.created` o `customerMessage.created` |
 | `X-Bridge-Delivery` | UUID único de entrega (idempotencia) | `c56a4180-65aa-42ec-a945-5fd21dec0538` |
 | `X-Bridge-Timestamp` | Fecha y hora en ISO 8601 | `2026-10-18T23:30:00-06:00` |
 | `Authorization` | Token Bearer | `Bearer <tu_token_secreto>` |
@@ -350,6 +353,41 @@ Una vez instalado, ingresa a la configuración del módulo:
     "groups": [3],
     "date_add": "2026-10-18 23:35:00",
     "date_upd": "2026-10-18 23:35:00"
+  }
+}
+```
+
+---
+
+### Ejemplo de Payload JSON (`customerMessage.created`)
+
+```json
+{
+  "event": "customerMessage.created",
+  "event_id": "msg_89_1761955200",
+  "timestamp": "2026-11-01T00:15:00-06:00",
+  "message": {
+    "id": 89,
+    "content": "Hola, ¿podrían indicarme si mi paquete ya fue enviado?",
+    "date_add": "2026-11-01 00:15:00",
+    "ip_address": "192.168.1.100"
+  },
+  "customer": {
+    "id": 42,
+    "firstname": "Carlos",
+    "lastname": "Gómez",
+    "email": "carlos.gomez@example.com"
+  },
+  "order": {
+    "id": 105,
+    "reference": "XJHDFPKO",
+    "total_paid": 125.50,
+    "date_add": "2026-10-18 23:29:55",
+    "current_state": 2
+  },
+  "metadata": {
+    "thread_id": 15,
+    "shop_id": 1
   }
 }
 ```
