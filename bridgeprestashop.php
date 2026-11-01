@@ -48,7 +48,6 @@ class BridgePrestashop extends Module
         $this->author = 'Luis Eduardo Alvarado Martínez';
         $this->need_instance = 0;
         $this->bootstrap = true;
-        $this->emailing = 'luis.alvaradomtz97@gmail.com';
 
         // Compatible con PrestaShop 9.0 en adelante
         $this->ps_versions_compliancy = [
