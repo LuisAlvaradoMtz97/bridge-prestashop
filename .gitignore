@@ -6,4 +6,6 @@ composer.lock
 *.zip
 .DS_Store
 /bridgeprestashop/
-*.zip
+REGLAS_VALIDADOR_PRESTASHOP.md
+EXPLICACION_ERRORES_VALIDADOR.md
+

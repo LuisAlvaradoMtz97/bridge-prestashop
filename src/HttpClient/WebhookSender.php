@@ -1,4 +1,19 @@
 <?php
+/**
+ * 2026 Bridge PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/afl-3.0.php
+ *
+ * @author    Luis Eduardo Alvarado Martínez <luis.alvaradomtz97@gmail.com>
+ * @copyright 2026 Bridge PrestaShop
+ * @license   https://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
+ */
+
 declare(strict_types=1);
 
 namespace BridgePrestashop\HttpClient;
@@ -33,6 +48,7 @@ class WebhookSender
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             $err = 'URL de Webhook inválida o no configurada.';
             BridgeLogger::warning($err, $entityId);
+
             return [
                 'success'     => false,
                 'http_code'   => 0,
@@ -122,6 +138,7 @@ class WebhookSender
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             $err = 'URL de Webhook inválida o no configurada.';
             BridgeLogger::warning($err, $entityId);
+
             return [
                 'success'     => false,
                 'http_code'   => 0,
@@ -313,6 +330,7 @@ class WebhookSender
         }
 
         $isSuccess = ($httpCode >= 200 && $httpCode < 300);
+
         return [
             'success'   => $isSuccess,
             'http_code' => $httpCode,

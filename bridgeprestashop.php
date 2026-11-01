@@ -48,7 +48,6 @@ class BridgePrestashop extends Module
         $this->author = 'Luis Eduardo Alvarado Martínez';
         $this->need_instance = 0;
         $this->bootstrap = true;
-        $this->emailing = 'luis.alvaradomtz97@gmail.com';
 
         // Compatible con PrestaShop 9.0 en adelante
         $this->ps_versions_compliancy = [
@@ -59,16 +58,14 @@ class BridgePrestashop extends Module
         parent::__construct();
 
         $this->displayName = $this->l('Bridge PrestaShop');
-        $this->description = $this->l('Envía notificaciones vía Webhook a plataformas de terceros cuando se crea o actualiza un pedido.');
-        $this->confirmUninstall = $this->l('¿Estás seguro de que deseas desinstalar Bridge PrestaShop? Se perderá la configuración de los webhooks.');
+        $this->description = $this->l('Send notifications via Webhook to third-party platforms when an order is created or updated.');
+        $this->confirmUninstall = $this->l('Are you sure you want to uninstall Bridge PrestaShop? The webhook configuration will be lost.');
     }
 
     public function install(): bool
     {
         return parent::install()
             && $this->registerHook('actionValidateOrder')
-            // && $this->registerHook('actionOrderStatusUpdate')
-            // && $this->registerHook('actionObjectAddAfter')
             && $this->registerHook('actionOrderStatusPostUpdate')
             && $this->registerHook('actionCartSave')
             && $this->registerHook('actionCustomerAccountAdd')
@@ -110,12 +107,13 @@ class BridgePrestashop extends Module
         $handler->handleOrderCreated($params);
     }
 
-    //Hook para notificacion de mensajes enviados por parte del usuario
-    public function hookActionObjectCustomerMessageAddAfter(array $params) : void
+    // Hook para notificacion de mensajes enviados por parte del usuario
+    public function hookActionObjectCustomerMessageAddAfter(array $params): void
     {
         $handler = new CustomerMessageEventHandler();
         $handler->handleCustomerMessageCreated($params);
     }
+
     /**
      * Hook disparado cuando cambia el estado de un pedido.
      */
@@ -136,9 +134,8 @@ class BridgePrestashop extends Module
 
     public function hookActionCartSave(array $params): void
     {
-    $handler = new CustomerEventHandler();
+        $handler = new CustomerEventHandler();
         $handler->handleCustomerCreated($params);
-    
     }
 
     private function processConfiguration(): string
@@ -222,7 +219,7 @@ class BridgePrestashop extends Module
             ModuleConfig::KEY_SECRET_TOKEN => Configuration::get(ModuleConfig::KEY_SECRET_TOKEN),
             ModuleConfig::KEY_TIMEOUT => Configuration::get(ModuleConfig::KEY_TIMEOUT) ?: ModuleConfig::DEFAULT_TIMEOUT,
             ModuleConfig::KEY_VERIFY_SSL => Configuration::get(ModuleConfig::KEY_VERIFY_SSL),
-            ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) !== false ? Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) : (ModuleConfig::DEFAULT_NOTIFY_ORDERS ? '1' : '0'),
+            ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS),
             ModuleConfig::KEY_NOTIFY_STATUS_CHANGE => Configuration::get(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE),
             ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION),
             ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE),
@@ -322,7 +319,7 @@ class BridgePrestashop extends Module
                             ['id' => 'cust_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
-                    //Añadimos la opcion para notificar referente a los mensajes
+                    // Añadimos la opcion para notificar referente a los mensajes
                     [
                         'type' => 'switch',
                         'label' => $this->l('Notificar mensajes recibidos por clientes'),

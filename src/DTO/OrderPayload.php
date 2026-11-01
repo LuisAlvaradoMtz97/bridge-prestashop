@@ -1,4 +1,19 @@
 <?php
+/**
+ * 2026 Bridge PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/afl-3.0.php
+ *
+ * @author    Luis Eduardo Alvarado Martínez <luis.alvaradomtz97@gmail.com>
+ * @copyright 2026 Bridge PrestaShop
+ * @license   https://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
+ */
+
 declare(strict_types=1);
 
 namespace BridgePrestashop\DTO;
@@ -9,15 +24,16 @@ if (!defined('_PS_VERSION_')) {
 
 use Address;
 use Carrier;
-use Context;
+use Configuration;
 use Country;
 use Currency;
 use Customer;
 use Group;
 use Order;
 use OrderState;
+use Shop;
 use State;
-use BridgePrestashop\Logger\BridgeLogger;
+use Throwable;
 
 class OrderPayload implements PayloadInterface
 {
@@ -30,9 +46,7 @@ class OrderPayload implements PayloadInterface
 
     public static function fromOrder(Order $order, string $eventName = 'order.created'): self
     {
-
-        $context = Context::getContext();
-        $idLang = $order->id_lang ?: ($context->language ? $context->language->id : 1);
+        $idLang = (int) ($order->id_lang ?: (Configuration::get('PS_LANG_DEFAULT') ?: 1));
 
         // Estado del pedido
         $orderState = new OrderState((int) $order->current_state, (int) $idLang);
@@ -83,16 +97,17 @@ class OrderPayload implements PayloadInterface
         }
 
         // Tienda
-        $shop = $context->shop;
-        $shopUrl = $shop ? (string) $shop->getBaseURL(true) : '';
-        $shopName = $shop ? (string) $shop->name : '';
+        $idShop = (int) ($order->id_shop ?: (Configuration::get('PS_SHOP_DEFAULT') ?: 1));
+        $shop = new Shop($idShop);
+        $shopUrl = (string) $shop->getBaseURL(true);
+        $shopName = (string) $shop->name;
 
         $data = [
             'event' => $eventName,
             'event_id' => self::generateUuidV4(),
             'timestamp' => date('c'),
             'shop' => [
-                'id' => (int) $order->id_shop,
+                'id' => $idShop,
                 'name' => $shopName,
                 'url' => $shopUrl,
             ],
@@ -150,24 +165,22 @@ class OrderPayload implements PayloadInterface
         ];
 
         return new self($data);
-      
-        
     }
 
-    //Creacion de envio de datos pruebas
+    // Creacion de envio de datos pruebas
     public static function createTestPayload(): self
     {
-        $context = Context::getContext();
-        $shop = $context->shop;
+        $idShop = (int) (Configuration::get('PS_SHOP_DEFAULT') ?: 1);
+        $shop = new Shop($idShop);
 
         $data = [
             'event' => 'webhook.test',
             'event_id' => self::generateUuidV4(),
             'timestamp' => date('c'),
             'shop' => [
-                'id' => $shop ? (int) $shop->id : 1,
-                'name' => $shop ? (string) $shop->name : 'PrestaShop 9',
-                'url' => $shop ? (string) $shop->getBaseURL(true) : 'https://example.com/',
+                'id' => $idShop,
+                'name' => (string) ($shop->name ?: 'PrestaShop'),
+                'url' => (string) ($shop->getBaseURL(true) ?: 'https://example.com/'),
             ],
             'message' => 'Este es un mensaje de prueba emitido por el módulo Bridge PrestaShop.',
             'version' => '1.0.0',
@@ -201,6 +214,7 @@ class OrderPayload implements PayloadInterface
     public function toJson(): string
     {
         $json = json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         return $json !== false ? $json : '{}';
     }
 
@@ -246,20 +260,21 @@ class OrderPayload implements PayloadInterface
     {
         try {
             $bytes = random_bytes(16);
-            $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
-            $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+            $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);
+            $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
+
             return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-        } catch (\Throwable) {
+        } catch (Throwable $e) {
             return sprintf(
                 '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0x0fff) | 0x4000,
-                mt_rand(0, 0x3fff) | 0x8000,
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff)
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0x0FFF) | 0x4000,
+                mt_rand(0, 0x3FFF) | 0x8000,
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF)
             );
         }
     }
