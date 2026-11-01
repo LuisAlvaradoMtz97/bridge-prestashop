@@ -7,12 +7,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Configuration;
+use Customer;
 use CustomerMessage;
 use CustomerThread;
-use Customer;
 use Order;
 use Validate;
-use Context;
 
 class CustomerMessagePayload implements PayloadInterface{
     private $data;
@@ -41,6 +41,18 @@ class CustomerMessagePayload implements PayloadInterface{
             }
         }
 
+        // Determinar tienda asociada
+        $idShop = 0;
+        if (Validate::isLoadedObject($customerThread) && !empty($customerThread->id_shop)) {
+            $idShop = (int) $customerThread->id_shop;
+        } elseif ($order && Validate::isLoadedObject($order) && !empty($order->id_shop)) {
+            $idShop = (int) $order->id_shop;
+        } elseif ($customer && Validate::isLoadedObject($customer) && !empty($customer->id_shop)) {
+            $idShop = (int) $customer->id_shop;
+        } else {
+            $idShop = (int) (Configuration::get('PS_SHOP_DEFAULT') ?: 1);
+        }
+
         // 2. Extraer datos básicos y de valor
         $data = [
             'event' => $eventName,
@@ -67,7 +79,7 @@ class CustomerMessagePayload implements PayloadInterface{
             ] : null,
             'metadata' => [
                 'thread_id' => (int) $message->id_customer_thread,
-                'shop_id'   => (int) Context::getContext()->shop->id,
+                'shop_id'   => $idShop,
             ]
         ];
 

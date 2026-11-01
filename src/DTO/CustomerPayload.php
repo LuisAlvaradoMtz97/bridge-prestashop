@@ -7,9 +7,10 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use Context;
+use Configuration;
 use Customer;
 use Group;
+use Shop;
 use Throwable;
 
 class CustomerPayload implements PayloadInterface
@@ -23,8 +24,7 @@ class CustomerPayload implements PayloadInterface
 
     public static function fromCustomer(Customer $customer, string $eventName = 'customer.created'): self
     {
-        $context = Context::getContext();
-        $idLang = (int) ($customer->id_lang ?: ($context->language ? $context->language->id : 1));
+        $idLang = (int) ($customer->id_lang ?: (Configuration::get('PS_LANG_DEFAULT') ?: 1));
 
         $defaultGroup = new Group((int) $customer->id_default_group, $idLang);
         $defaultGroupName = is_array($defaultGroup->name)
@@ -32,9 +32,10 @@ class CustomerPayload implements PayloadInterface
             : (string) $defaultGroup->name;
 
         // Tienda
-        $shop = $context->shop;
-        $shopUrl = $shop ? (string) $shop->getBaseURL(true) : '';
-        $shopName = $shop ? (string) $shop->name : '';
+        $idShop = (int) ($customer->id_shop ?: (Configuration::get('PS_SHOP_DEFAULT') ?: 1));
+        $shop = new Shop($idShop);
+        $shopUrl = (string) $shop->getBaseURL(true);
+        $shopName = (string) $shop->name;
 
         // Grupos a los que pertenece
         $rawGroups = $customer->getGroups();
@@ -48,7 +49,7 @@ class CustomerPayload implements PayloadInterface
             'event_id' => self::generateUuidV4(),
             'timestamp' => date('c'),
             'shop' => [
-                'id' => (int) ($customer->id_shop ?: ($shop ? $shop->id : 1)),
+                'id' => $idShop,
                 'name' => $shopName,
                 'url' => $shopUrl,
             ],

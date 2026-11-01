@@ -59,8 +59,8 @@ class BridgePrestashop extends Module
         parent::__construct();
 
         $this->displayName = $this->l('Bridge PrestaShop');
-        $this->description = $this->l('Envía notificaciones vía Webhook a plataformas de terceros cuando se crea o actualiza un pedido.');
-        $this->confirmUninstall = $this->l('¿Estás seguro de que deseas desinstalar Bridge PrestaShop? Se perderá la configuración de los webhooks.');
+        $this->description = $this->l('Send notifications via Webhook to third-party platforms when an order is created or updated.');
+        $this->confirmUninstall = $this->l('Are you sure you want to uninstall Bridge PrestaShop? The webhook configuration will be lost.');
     }
 
     public function install(): bool

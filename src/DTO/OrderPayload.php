@@ -9,13 +9,14 @@ if (!defined('_PS_VERSION_')) {
 
 use Address;
 use Carrier;
-use Context;
+use Configuration;
 use Country;
 use Currency;
 use Customer;
 use Group;
 use Order;
 use OrderState;
+use Shop;
 use State;
 use BridgePrestashop\Logger\BridgeLogger;
 
@@ -31,8 +32,7 @@ class OrderPayload implements PayloadInterface
     public static function fromOrder(Order $order, string $eventName = 'order.created'): self
     {
 
-        $context = Context::getContext();
-        $idLang = $order->id_lang ?: ($context->language ? $context->language->id : 1);
+        $idLang = (int) ($order->id_lang ?: (Configuration::get('PS_LANG_DEFAULT') ?: 1));
 
         // Estado del pedido
         $orderState = new OrderState((int) $order->current_state, (int) $idLang);
@@ -83,16 +83,17 @@ class OrderPayload implements PayloadInterface
         }
 
         // Tienda
-        $shop = $context->shop;
-        $shopUrl = $shop ? (string) $shop->getBaseURL(true) : '';
-        $shopName = $shop ? (string) $shop->name : '';
+        $idShop = (int) ($order->id_shop ?: (Configuration::get('PS_SHOP_DEFAULT') ?: 1));
+        $shop = new Shop($idShop);
+        $shopUrl = (string) $shop->getBaseURL(true);
+        $shopName = (string) $shop->name;
 
         $data = [
             'event' => $eventName,
             'event_id' => self::generateUuidV4(),
             'timestamp' => date('c'),
             'shop' => [
-                'id' => (int) $order->id_shop,
+                'id' => $idShop,
                 'name' => $shopName,
                 'url' => $shopUrl,
             ],
@@ -157,17 +158,17 @@ class OrderPayload implements PayloadInterface
     //Creacion de envio de datos pruebas
     public static function createTestPayload(): self
     {
-        $context = Context::getContext();
-        $shop = $context->shop;
+        $idShop = (int) (Configuration::get('PS_SHOP_DEFAULT') ?: 1);
+        $shop = new Shop($idShop);
 
         $data = [
             'event' => 'webhook.test',
             'event_id' => self::generateUuidV4(),
             'timestamp' => date('c'),
             'shop' => [
-                'id' => $shop ? (int) $shop->id : 1,
-                'name' => $shop ? (string) $shop->name : 'PrestaShop 9',
-                'url' => $shop ? (string) $shop->getBaseURL(true) : 'https://example.com/',
+                'id' => $idShop,
+                'name' => (string) ($shop->name ?: 'PrestaShop'),
+                'url' => (string) ($shop->getBaseURL(true) ?: 'https://example.com/'),
             ],
             'message' => 'Este es un mensaje de prueba emitido por el módulo Bridge PrestaShop.',
             'version' => '1.0.0',
