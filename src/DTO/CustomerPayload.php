@@ -17,16 +17,15 @@
 declare(strict_types=1);
 
 namespace BridgePrestashop\DTO;
-
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
 use Configuration;
 use Customer;
 use Group;
 use Shop;
 use Throwable;
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
 
 class CustomerPayload implements PayloadInterface
 {
@@ -37,28 +36,24 @@ class CustomerPayload implements PayloadInterface
         $this->data = $data;
     }
 
-    public static function fromCustomer(Customer $customer, string $eventName = 'customer.created'): self
+    public static function fromCustomer(\Customer $customer, string $eventName = 'customer.created'): self
     {
-        $idLang = (int) ($customer->id_lang ?: (Configuration::get('PS_LANG_DEFAULT') ?: 1));
-
-        $defaultGroup = new Group((int) $customer->id_default_group, $idLang);
+        $idLang = (int) ($customer->id_lang ?: (\Configuration::get('PS_LANG_DEFAULT') ?: 1));
+        $defaultGroup = new \Group((int) $customer->id_default_group, $idLang);
         $defaultGroupName = is_array($defaultGroup->name)
             ? ($defaultGroup->name[$idLang] ?? reset($defaultGroup->name))
             : (string) $defaultGroup->name;
-
         // Tienda
-        $idShop = (int) ($customer->id_shop ?: (Configuration::get('PS_SHOP_DEFAULT') ?: 1));
+        $idShop = (int) ($customer->id_shop ?: (\Configuration::get('PS_SHOP_DEFAULT') ?: 1));
         $shop = new Shop($idShop);
         $shopUrl = (string) $shop->getBaseURL(true);
         $shopName = (string) $shop->name;
-
         // Grupos a los que pertenece
         $rawGroups = $customer->getGroups();
         if (empty($rawGroups)) {
             $rawGroups = [(int) $customer->id_default_group];
         }
         $groups = array_values(array_map('intval', $rawGroups));
-
         $data = [
             'event' => $eventName,
             'event_id' => self::generateUuidV4(),
@@ -121,20 +116,21 @@ class CustomerPayload implements PayloadInterface
     {
         try {
             $bytes = random_bytes(16);
-            $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
-            $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+            $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);
+            $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
+
             return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-        } catch (Throwable) {
+        } catch (\Throwable $e) {
             return sprintf(
                 '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0x0fff) | 0x4000,
-                mt_rand(0, 0x3fff) | 0x8000,
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff)
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0x0FFF) | 0x4000,
+                mt_rand(0, 0x3FFF) | 0x8000,
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF)
             );
         }
     }

@@ -22,9 +22,11 @@ echo "Copiando archivos y carpetas del proyecto..."
 for archivo in "$DIR_ACTUAL"/*; do
     nombre_base=$(basename "$archivo")
     
-    # Evitamos copiarnos a nosotros mismos, zips y la carpeta de destino
+    # Evitamos copiarnos a nosotros mismos, zips, documentación interna y la carpeta de destino
     if [ "$nombre_base" != "$NOMBRE_CARPETA" ] && \
        [ "$nombre_base" != "empaquetar.sh" ] && \
+       [ "$nombre_base" != "REGLAS_VALIDADOR_PRESTASHOP.md" ] && \
+       [ "$nombre_base" != "EXPLICACION_ERRORES_VALIDADOR.md" ] && \
        [[ "$nombre_base" != *.zip ]]; then
         cp -r "$archivo" "$RUTA_DESTINO/"
     fi
@@ -43,6 +45,13 @@ find "$RUTA_DESTINO" -type d | while read -r dir; do
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/afl-3.0.php
+ *
+ * @author    Luis Eduardo Alvarado Martínez <luis.alvaradomtz97@gmail.com>
+ * @copyright 2026 Bridge PrestaShop
+ * @license   https://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
  */
 
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');

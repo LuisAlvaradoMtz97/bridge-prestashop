@@ -51,19 +51,16 @@ class ModuleConfig
      */
     public static function installDefaults(): bool
     {
-        $res = true;
-        $res = $res && Configuration::updateValue(self::KEY_ENABLED, self::DEFAULT_ENABLED ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_WEBHOOK_URL, '');
-        $res = $res && Configuration::updateValue(self::KEY_SECRET_TOKEN, self::generateRandomToken());
-        $res = $res && Configuration::updateValue(self::KEY_TIMEOUT, (string) self::DEFAULT_TIMEOUT);
-        $res = $res && Configuration::updateValue(self::KEY_VERIFY_SSL, self::DEFAULT_VERIFY_SSL ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_ORDERS, self::DEFAULT_NOTIFY_ORDERS ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_STATUS_CHANGE, self::DEFAULT_NOTIFY_STATUS ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_CUSTOMER_REGISTRATION, self::DEFAULT_NOTIFY_CUSTOMER_REGISTRATION ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_LOG_REQUESTS, self::DEFAULT_LOG_REQUESTS ? '1' : '0');
-        $res = $res && Configuration::updateValue(self::KEY_NOTIFY_CUSTOMER_MESSAGE, self::DEFAULT_NOTIFY_CUSTOMER_MESSAGE ? '1': '0');
-
-        return $res;
+        return Configuration::updateValue(self::KEY_ENABLED, '1')
+            && Configuration::updateValue(self::KEY_WEBHOOK_URL, '')
+            && Configuration::updateValue(self::KEY_SECRET_TOKEN, self::generateRandomToken())
+            && Configuration::updateValue(self::KEY_TIMEOUT, (string) self::DEFAULT_TIMEOUT)
+            && Configuration::updateValue(self::KEY_VERIFY_SSL, '1')
+            && Configuration::updateValue(self::KEY_NOTIFY_ORDERS, '1')
+            && Configuration::updateValue(self::KEY_NOTIFY_STATUS_CHANGE, '1')
+            && Configuration::updateValue(self::KEY_NOTIFY_CUSTOMER_REGISTRATION, '1')
+            && Configuration::updateValue(self::KEY_LOG_REQUESTS, '1')
+            && Configuration::updateValue(self::KEY_NOTIFY_CUSTOMER_MESSAGE, '1');
     }
 
     /**
@@ -81,12 +78,14 @@ class ModuleConfig
             self::KEY_NOTIFY_STATUS_CHANGE,
             self::KEY_NOTIFY_CUSTOMER_REGISTRATION,
             self::KEY_LOG_REQUESTS,
-            self::KEY_NOTIFY_CUSTOMER_MESSAGE
+            self::KEY_NOTIFY_CUSTOMER_MESSAGE,
         ];
 
         $res = true;
         foreach ($keys as $key) {
-            $res = $res && Configuration::deleteByName($key);
+            if (!Configuration::deleteByName($key)) {
+                $res = false;
+            }
         }
 
         return $res;
@@ -110,18 +109,21 @@ class ModuleConfig
     public static function getTimeout(): int
     {
         $timeout = (int) Configuration::get(self::KEY_TIMEOUT);
+
         return $timeout > 0 ? $timeout : self::DEFAULT_TIMEOUT;
     }
 
     public static function isVerifySsl(): bool
     {
         $val = Configuration::get(self::KEY_VERIFY_SSL);
+
         return $val === false ? self::DEFAULT_VERIFY_SSL : (bool) $val;
     }
 
     public static function shouldNotifyOrders(): bool
     {
         $val = Configuration::get(self::KEY_NOTIFY_ORDERS);
+
         return $val === false ? self::DEFAULT_NOTIFY_ORDERS : (bool) $val;
     }
 
@@ -133,16 +135,18 @@ class ModuleConfig
     public static function shouldNotifyCustomerRegistration(): bool
     {
         $val = Configuration::get(self::KEY_NOTIFY_CUSTOMER_REGISTRATION);
+
         return $val === false ? self::DEFAULT_NOTIFY_CUSTOMER_REGISTRATION : (bool) $val;
     }
 
     public static function shouldLogRequests(): bool
     {
         $val = Configuration::get(self::KEY_LOG_REQUESTS);
+
         return $val === false ? self::DEFAULT_LOG_REQUESTS : (bool) $val;
     }
 
-    //Retorna el valor de las notificaciones de los mensajes
+    // Retorna el valor de las notificaciones de los mensajes
     public static function shouldNotifyCustomerMessage(): bool
     {
         return (bool) Configuration::get(self::KEY_NOTIFY_CUSTOMER_MESSAGE);
@@ -155,7 +159,7 @@ class ModuleConfig
     {
         try {
             return bin2hex(random_bytes($bytes));
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             return md5(uniqid((string) mt_rand(), true));
         }
     }

@@ -40,39 +40,37 @@ class CustomerMessageEventHandler
         $this->sender = $sender ?? new WebhookSender();
     }
 
-public function handleCustomerMessageCreated(array $params) : void
+    public function handleCustomerMessageCreated(array $params): void
     {
-        if(!ModuleConfig::isEnabled() || !ModuleConfig::shouldNotifyCustomerMessage()){
+        if (!ModuleConfig::isEnabled() || !ModuleConfig::shouldNotifyCustomerMessage()) {
             return;
         }
 
-        try
-        {
+        try {
             $customerMessage = $params['object'] ?? null;
-            if(!$customerMessage instanceof CustomerMessage || !(int) $customerMessage->id){
+            if (!$customerMessage instanceof CustomerMessage || !(int) $customerMessage->id) {
                 BridgeLogger::warning('Se recibio un evento de mensaje de cliente pero sin instalcia valida de CustomerMessage.');
+
                 return;
             }
 
             // VALIDACIÓN CLAVE: Si tiene id_employee > 0, lo escribió un empleado en el Back Office. Lo ignoramos.
             if ((int) $customerMessage->id_employee > 0) {
-                return; 
+                return;
             }
 
             // Validación adicional: Asegurar que el hilo del cliente exista y tenga un cliente asociado
             $customerThread = new CustomerThread((int) $customerMessage->id_customer_thread);
             if (!Validate::isLoadedObject($customerThread) || !(int) $customerThread->id_customer) {
                 BridgeLogger::warning('El mensaje de cliente no está asociado a un CustomerThread válido.');
+
                 return;
             }
-            
 
             $payload = CustomerMessagePayload::fromCustomerMessagePayload($customerMessage, 'customerMessage.created');
             $this->sender->send($payload, (int) $customerMessage->id);
-        }
-        catch(Throwable $e){
+        } catch (Throwable $e) {
             BridgeLogger::error('Excepcion no controlada en handleCustomerMessageCreated: ' . $e->getMessage());
         }
     }
 }
-    

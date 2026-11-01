@@ -66,8 +66,6 @@ class BridgePrestashop extends Module
     {
         return parent::install()
             && $this->registerHook('actionValidateOrder')
-            // && $this->registerHook('actionOrderStatusUpdate')
-            // && $this->registerHook('actionObjectAddAfter')
             && $this->registerHook('actionOrderStatusPostUpdate')
             && $this->registerHook('actionCartSave')
             && $this->registerHook('actionCustomerAccountAdd')
@@ -109,12 +107,13 @@ class BridgePrestashop extends Module
         $handler->handleOrderCreated($params);
     }
 
-    //Hook para notificacion de mensajes enviados por parte del usuario
-    public function hookActionObjectCustomerMessageAddAfter(array $params) : void
+    // Hook para notificacion de mensajes enviados por parte del usuario
+    public function hookActionObjectCustomerMessageAddAfter(array $params): void
     {
         $handler = new CustomerMessageEventHandler();
         $handler->handleCustomerMessageCreated($params);
     }
+
     /**
      * Hook disparado cuando cambia el estado de un pedido.
      */
@@ -135,9 +134,8 @@ class BridgePrestashop extends Module
 
     public function hookActionCartSave(array $params): void
     {
-    $handler = new CustomerEventHandler();
+        $handler = new CustomerEventHandler();
         $handler->handleCustomerCreated($params);
-    
     }
 
     private function processConfiguration(): string
@@ -221,7 +219,7 @@ class BridgePrestashop extends Module
             ModuleConfig::KEY_SECRET_TOKEN => Configuration::get(ModuleConfig::KEY_SECRET_TOKEN),
             ModuleConfig::KEY_TIMEOUT => Configuration::get(ModuleConfig::KEY_TIMEOUT) ?: ModuleConfig::DEFAULT_TIMEOUT,
             ModuleConfig::KEY_VERIFY_SSL => Configuration::get(ModuleConfig::KEY_VERIFY_SSL),
-            ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) !== false ? Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS) : (ModuleConfig::DEFAULT_NOTIFY_ORDERS ? '1' : '0'),
+            ModuleConfig::KEY_NOTIFY_ORDERS => Configuration::get(ModuleConfig::KEY_NOTIFY_ORDERS),
             ModuleConfig::KEY_NOTIFY_STATUS_CHANGE => Configuration::get(ModuleConfig::KEY_NOTIFY_STATUS_CHANGE),
             ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_REGISTRATION),
             ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE => Configuration::get(ModuleConfig::KEY_NOTIFY_CUSTOMER_MESSAGE),
@@ -321,7 +319,7 @@ class BridgePrestashop extends Module
                             ['id' => 'cust_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
-                    //Añadimos la opcion para notificar referente a los mensajes
+                    // Añadimos la opcion para notificar referente a los mensajes
                     [
                         'type' => 'switch',
                         'label' => $this->l('Notificar mensajes recibidos por clientes'),

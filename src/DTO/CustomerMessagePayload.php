@@ -29,22 +29,23 @@ use CustomerThread;
 use Order;
 use Validate;
 
-class CustomerMessagePayload implements PayloadInterface{
-    private $data;
+class CustomerMessagePayload implements PayloadInterface
+{
+    private array $data;
 
     public function __construct(array $data)
     {
         $this->data = $data;
     }
 
-    public static function fromCustomerMessagePayload(CustomerMessage $message, string $eventName ='customerMessage.created'): self
+    public static function fromCustomerMessagePayload(CustomerMessage $message, string $eventName = 'customerMessage.created'): self
     {
-   // 1. Obtener el hilo de cliente para relacionar datos
+        // 1. Obtener el hilo de cliente para relacionar datos
         $customerThread = new CustomerThread((int) $message->id_customer_thread);
-        
+
         $customer = null;
         $order = null;
-        
+
         if (Validate::isLoadedObject($customerThread)) {
             // Si el hilo tiene un cliente asociado
             if (!empty($customerThread->id_customer)) {
@@ -77,7 +78,7 @@ class CustomerMessagePayload implements PayloadInterface{
                 'id' => (int) $message->id,
                 'content' => $message->message,
                 'date_add' => $message->date_add,
-                'ip_address' => $message->ip_address ?? null,
+                'ip_address' => $message->ip_address,
             ],
             'customer' => [
                 'id' => $customer && Validate::isLoadedObject($customer) ? (int) $customer->id : null,
@@ -95,7 +96,7 @@ class CustomerMessagePayload implements PayloadInterface{
             'metadata' => [
                 'thread_id' => (int) $message->id_customer_thread,
                 'shop_id'   => $idShop,
-            ]
+            ],
         ];
 
         return new self($data);
@@ -109,10 +110,11 @@ class CustomerMessagePayload implements PayloadInterface{
     public function toJson(): string
     {
         $json = json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         return $json !== false ? $json : '{}';
     }
 
-       public function getEventName(): string
+    public function getEventName(): string
     {
         return (string) ($this->data['event'] ?? 'customer.created');
     }

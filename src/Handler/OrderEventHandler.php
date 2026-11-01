@@ -51,6 +51,7 @@ class OrderEventHandler
             $order = $params['order'] ?? null;
             if (!$order instanceof Order || !(int) $order->id) {
                 BridgeLogger::warning('Se recibió un evento de nuevo pedido pero sin instancia válida de Order.');
+
                 return;
             }
 

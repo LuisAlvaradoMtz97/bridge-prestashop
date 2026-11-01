@@ -48,6 +48,7 @@ class WebhookSender
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             $err = 'URL de Webhook inválida o no configurada.';
             BridgeLogger::warning($err, $entityId);
+
             return [
                 'success'     => false,
                 'http_code'   => 0,
@@ -137,6 +138,7 @@ class WebhookSender
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
             $err = 'URL de Webhook inválida o no configurada.';
             BridgeLogger::warning($err, $entityId);
+
             return [
                 'success'     => false,
                 'http_code'   => 0,
@@ -328,6 +330,7 @@ class WebhookSender
         }
 
         $isSuccess = ($httpCode >= 200 && $httpCode < 300);
+
         return [
             'success'   => $isSuccess,
             'http_code' => $httpCode,

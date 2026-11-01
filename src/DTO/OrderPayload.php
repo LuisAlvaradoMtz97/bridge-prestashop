@@ -33,7 +33,7 @@ use Order;
 use OrderState;
 use Shop;
 use State;
-use BridgePrestashop\Logger\BridgeLogger;
+use Throwable;
 
 class OrderPayload implements PayloadInterface
 {
@@ -46,7 +46,6 @@ class OrderPayload implements PayloadInterface
 
     public static function fromOrder(Order $order, string $eventName = 'order.created'): self
     {
-
         $idLang = (int) ($order->id_lang ?: (Configuration::get('PS_LANG_DEFAULT') ?: 1));
 
         // Estado del pedido
@@ -166,11 +165,9 @@ class OrderPayload implements PayloadInterface
         ];
 
         return new self($data);
-      
-        
     }
 
-    //Creacion de envio de datos pruebas
+    // Creacion de envio de datos pruebas
     public static function createTestPayload(): self
     {
         $idShop = (int) (Configuration::get('PS_SHOP_DEFAULT') ?: 1);
@@ -217,6 +214,7 @@ class OrderPayload implements PayloadInterface
     public function toJson(): string
     {
         $json = json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         return $json !== false ? $json : '{}';
     }
 
@@ -262,20 +260,21 @@ class OrderPayload implements PayloadInterface
     {
         try {
             $bytes = random_bytes(16);
-            $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
-            $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+            $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);
+            $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
+
             return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-        } catch (\Throwable) {
+        } catch (Throwable $e) {
             return sprintf(
                 '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0x0fff) | 0x4000,
-                mt_rand(0, 0x3fff) | 0x8000,
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff)
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0x0FFF) | 0x4000,
+                mt_rand(0, 0x3FFF) | 0x8000,
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF),
+                mt_rand(0, 0xFFFF)
             );
         }
     }

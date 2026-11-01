@@ -13,6 +13,7 @@
  * @copyright 2026 Bridge PrestaShop
  * @license   https://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
  */
+
 declare(strict_types=1);
 
 namespace BridgePrestashop\Handler;
@@ -51,6 +52,7 @@ class CustomerEventHandler
             $customer = $params['newCustomer'] ?? $params['customer'] ?? null;
             if (!$customer instanceof Customer || !(int) $customer->id) {
                 BridgeLogger::warning('Se recibió un evento de nuevo cliente pero sin instancia válida de Customer.');
+
                 return;
             }
 
@@ -60,5 +62,5 @@ class CustomerEventHandler
             BridgeLogger::error('Excepción no controlada en handleCustomerCreated: ' . $e->getMessage());
         }
     }
-
 }
+
